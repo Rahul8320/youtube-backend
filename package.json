@@ -1,0 +1,16 @@
+{
+  "name": "youtube-backend",
+  "version": "1.0.0",
+  "description": "Javascript backend application",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "author": "Rahul dey",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
