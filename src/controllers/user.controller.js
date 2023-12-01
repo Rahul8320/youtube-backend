@@ -3,6 +3,7 @@ import ApiError from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import ApiResponse from "../utils/apiResponse.js";
+import fs from "fs";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullname, email, password } = req.body;
@@ -16,22 +17,46 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Required fields cannot be empty");
   }
 
-  // Check if any existing user found with the same username or email
-  const existingUser = User.findOne({
-    $or: [{ username }, { email }],
-  });
+  // avatar and coverImage local path
+  let avatarLocalPath;
+  let coverImageLocalPath;
 
-  if (existingUser) {
-    throw new ApiError(409, "User already exists");
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  ) {
+    avatarLocalPath = req.files.avatar[0].path;
   }
 
-  // avatar and coverImage local path
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   // Check avatar local path exists or not
   if (!avatarLocalPath) {
     throw new ApiError(400, "Missing avatar image path");
+  }
+
+  // Check if any existing user found with the same username or email
+  const existingUser = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (existingUser) {
+    // delete the avatar from server
+    if (avatarLocalPath) {
+      fs.unlinkSync(avatarLocalPath);
+    }
+    // delete the cover image from server
+    if (coverImageLocalPath) {
+      fs.unlinkSync(coverImageLocalPath);
+    }
+    throw new ApiError(409, "User already exists");
   }
 
   // upload the avatar and cover image
