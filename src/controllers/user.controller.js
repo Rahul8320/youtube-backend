@@ -112,7 +112,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
   // check for username or email is exists or not
-  if (!username || !email) {
+  if (!username && !email) {
     throw new ApiError(400, "username or email is required");
   }
 
@@ -122,7 +122,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   // find existing user with username or email
-  const existingUser = await User.find({ $or: [{ username }, { email }] });
+  const existingUser = await User.findOne({ $or: [{ username }, { email }] });
 
   // check if existing user exists or not in the database
   if (!existingUser) {
@@ -138,6 +138,9 @@ const loginUser = asyncHandler(async (req, res) => {
   // generate refresh and access token
   const { accessToken, refreshToken } =
     await generateRefreshAndAccessToken(existingUser);
+
+  existingUser.password = undefined;
+  existingUser.refreshToken = undefined;
 
   // set cookie headers
   const options = { httpOnly: true, secure: true };
@@ -166,7 +169,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     req.user._id,
     {
       $set: {
-        refreshToken: undefined,
+        refreshToken: null,
       },
     },
     {
