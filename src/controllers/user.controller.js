@@ -258,7 +258,7 @@ const changedCurrentPassword = asyncHandler(async (req, res) => {
   }
 
   // fetch existing user data
-  const existingUser = await User.findById(req.user?._id);
+  const existingUser = await User.findById(req.user._id);
 
   // check old password is same in database
   const isPasswordCorrect = existingUser.isPasswordCorrect(oldPassword);
@@ -275,10 +275,52 @@ const changedCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password updated successfully."));
 });
 
+// get current user details
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { user }, "Current user fetch successfully."));
+});
+
+// update user details
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullname, email } = req.body;
+
+  if (!fullname || !email) {
+    throw new ApiError(400, "Required fields cannot be empty!");
+  }
+
+  // update user details
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        fullName: fullname,
+        email: email,
+      },
+    },
+    { new: true },
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user: updatedUser },
+        "Account details updated successfully!",
+      ),
+    );
+});
+
 export {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
   changedCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
 };
