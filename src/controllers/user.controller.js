@@ -239,4 +239,46 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+// changed current password
+const changedCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  // check for required fields
+  if (
+    [oldPassword, newPassword, confirmPassword].some(
+      (field) => field === undefined || field?.trim() === "",
+    )
+  ) {
+    throw new ApiError(400, "Required fields cannot be empty");
+  }
+
+  // check for new password and confirm password is same
+  if (newPassword !== confirmPassword) {
+    throw new ApiResponse(400, "Confirm password is not same as new password");
+  }
+
+  // fetch existing user data
+  const existingUser = await User.findById(req.user?._id);
+
+  // check old password is same in database
+  const isPasswordCorrect = existingUser.isPasswordCorrect(oldPassword);
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid old password");
+  }
+
+  // update new password
+  existingUser.password = newPassword;
+  await existingUser.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password updated successfully."));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changedCurrentPassword,
+};

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changedCurrentPassword,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -28,5 +29,8 @@ router.route("/logout").post(verifyJWT, logoutUser);
 
 // refresh token routes
 router.route("/refresh-token").post(refreshAccessToken);
+
+// changed current password routes
+router.route("/changed-password").post(verifyJWT, changedCurrentPassword);
 
 export default router;
